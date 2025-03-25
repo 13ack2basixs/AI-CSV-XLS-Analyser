@@ -25,3 +25,9 @@ if file and n.isdigit():
             df = pd.read_excel(selected_file)
         st.write(df.head(int(n)))
 
+    prompt = st.text_area("What do you want to know about the selected dataset?")
+    if prompt.strip() == "":
+        st.warning("Please enter a prompt!")
+    else:
+        st.write(prompt)
+    send = st.button("Send")
