@@ -6,6 +6,25 @@ from pandasai.llm.openai import OpenAI
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 llm = OpenAI(api_token=openai_api_key.strip()) 
 
+def sanitise_input(user_input):
+    allowed_chars = {
+        'abcdefghijklmnopqrstuvwxyz',
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        '0123456789',
+        ' ', ',', '.', '?', '-', '_', "'", '"', '@', '\n', '\r', '\t'
+    }
+    MAX_INPUT_LENGTH = 1000
+    sanitised = []
+    char_count = 0
+    
+    for char in user_input:
+        if char in allowed_chars:
+            sanitised.append(char)
+            char_count += 1
+            if char_count >= MAX_INPUT_LENGTH:
+                break
+    return ''.join(sanitised)
+
 st.title("AI CSV/XLS Analyser")
 
 # Upload files
@@ -46,6 +65,9 @@ if file and n.isdigit():
 
     st.session_state.prompt_input = st.text_area("What do you want to know about the selected file?",
                               value=st.session_state.prompt_input)
+    
+    # Sanitise prompt input
+    prompt_input = sanitise_input(st.session_state.prompt_input)
 
     # On click event for sending prompt
     def handle_send():
@@ -64,7 +86,7 @@ if file and n.isdigit():
     # Display dropdown of prompt history
     if st.session_state.prompt_history:
         old_prompt = st.selectbox("Select which prompt you would like to re-use:",
-                     options=st.session_state.prompt_history[::-1], index=None)
+                    options=st.session_state.prompt_history[::-1], index=None)
         if old_prompt:
             st.session_state.prompt_input = old_prompt
 
