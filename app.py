@@ -39,6 +39,10 @@ if file and n.isdigit():
         st.session_state.prompt_history = []
     if "prompt_input" not in st.session_state: 
         st.session_state.prompt_input = ""
+    if "feedback_history" not in st.session_state:
+        st.session_state.feedback_history = []
+    if "feedback_message" not in st.session_state:
+        st.session_state.feedback_message = ""
 
     st.session_state.prompt_input = st.text_area("What do you want to know about the selected file?",
                               value=st.session_state.prompt_input)
@@ -100,7 +104,31 @@ if file and n.isdigit():
                         st.session_state.prompt_history.append(prompt_input.strip())
                         # Keep only recent 5 prompts
                         st.session_state.prompt_history = st.session_state.prompt_history[-5:]
+                    
                     st.write(response)
+
+                    def handle_like():
+                        st.session_state.feedback_history.append({
+                            "prompt": prompt_input,
+                            "response": response,
+                            "feedback": "Like"
+                        })
+                        st.session_state.feedback_message = "You found this useful!"
+                    
+                    def handle_dislike():
+                        st.session_state.feedback_history.append({
+                            "prompt": prompt_input,
+                            "response": response,
+                            "feedback": "Dislike"
+                        })
+                        st.session_state.feedback_message = "You did not find this useful!"
+
+                    # Show feedback buttons
+                    st.button("Like", on_click=handle_like, icon=":material/thumb_up:")            
+                    st.button("Dislike", on_click=handle_dislike, icon=":material/thumb_down:")
+                    
+                    if st.session_state.feedback_message:
+                        st.info(st.session_state.feedback_message)
                 else:
                     st.warning("Dataset not found. Have you uploaded it?")
             else:
