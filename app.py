@@ -115,7 +115,7 @@ if file and n.isdigit():
         if check_rate_limit():
             st.error("Too many requests. Please try again after a minute.")
             st.stop()
-            
+
         with st.spinner("Generating..."):
             # Extract dataset user wants to know about
             dataset = None
@@ -168,7 +168,7 @@ if file and n.isdigit():
                         st.session_state.feedback_message = "You did not find this useful!"
 
                     # Show feedback buttons
-                    st.button("Like", on_click=handle_like, icon=":material/thumb_up:")            
+                    st.button("Like", on_click=handle_like, icon=":material/thumb_up:")  
                     st.button("Dislike", on_click=handle_dislike, icon=":material/thumb_down:")
                     
                     if st.session_state.feedback_message:
