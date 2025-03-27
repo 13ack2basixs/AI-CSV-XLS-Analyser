@@ -1,8 +1,7 @@
-# Secrets
 .streamlit/secrets.toml
 
-# Virtual env
 venv/
+cache/
+exports/
 
 pandasai.log
-cache/

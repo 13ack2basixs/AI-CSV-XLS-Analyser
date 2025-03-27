@@ -14,7 +14,7 @@ options = [uploaded_file.name for uploaded_file in uploaded_files]
 
 # User input 
 n = st.text_input("How many rows would you like to view?", "")
-file = st.selectbox("Select which file you would like to view the rows of", options, index=0)
+file = st.selectbox("Select which file you would like to view the rows of:", options, index=0)
 
 if file and n.isdigit():
     # Find selected file by user
@@ -30,30 +30,54 @@ if file and n.isdigit():
             df = pd.read_excel(selected_file)
         st.write(df.head(int(n)))
 
-    prompt = st.text_area("What do you want to know about the selected file?")
-
     # Initialise session state
     if "missing_prompt" not in st.session_state:
         st.session_state.missing_prompt = False
     if "generate_prompt" not in st.session_state:
         st.session_state.generate_prompt = False
+    if "prompt_history" not in st.session_state:
+        st.session_state.prompt_history = []
+    if "prompt_input" not in st.session_state: 
+        st.session_state.prompt_input = ""
+
+    st.session_state.prompt_input = st.text_area("What do you want to know about the selected file?",
+                              value=st.session_state.prompt_input)
 
     # On click event for sending prompt
     def handle_send():
-        if prompt.strip() == "":
-            st.session_state.generate_prompt = False
-            st.session_state.missing_prompt = True
-        else:
+        if st.session_state.prompt_input.strip():
             st.session_state.generate_prompt = True
             st.session_state.missing_prompt = False
+        else:
+            st.session_state.generate_prompt = False
+            st.session_state.missing_prompt = True
+
     
+    # Display warning for empty prompt
     if st.session_state.missing_prompt:
         st.warning("Please enter a prompt!")
 
+    # Display dropdown of prompt history
+    if st.session_state.prompt_history:
+        old_prompt = st.selectbox("Select which prompt you would like to re-use:",
+                     options=st.session_state.prompt_history[::-1], index=None)
+        if old_prompt:
+            st.session_state.prompt_input = old_prompt
+
     st.button("Send", on_click=handle_send)
-    
+
+    prompt_input = st.session_state.prompt_input
     if st.session_state.generate_prompt:
         with st.spinner("Generating..."):
             sdf = SmartDataframe(df, config={"llm": llm})
-            response = sdf.chat(prompt, output_type="string")
+            response = sdf.chat(prompt_input, output_type="string")
+            
+            # Append prompt to history
+            prompt = st.session_state.prompt_input.strip()
+            if prompt and prompt not in st.session_state.prompt_history:
+                st.session_state.prompt_history.append(prompt_input.strip())
+                # Keep only recent 5 prompts
+                st.session_state.prompt_history = st.session_state.prompt_history[-5:]
             st.write(response)
+
+        st.session_state.generate_prompt = False
