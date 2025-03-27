@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from pandasai import SmartDataframe 
 from pandasai.llm.openai import OpenAI
+from datetime import datetime, timedelta
 
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 llm = OpenAI(api_token=openai_api_key.strip()) 
@@ -24,6 +25,17 @@ def sanitise_input(user_input):
             if char_count >= MAX_INPUT_LENGTH:
                 break
     return ''.join(sanitised)
+
+def check_rate_limit():
+    rl = st.session_state.rate_limit
+
+    # Reset counter if past 1 min
+    if datetime.now() > rl["last_reset"] + timedelta(seconds=rl["window_seconds"]):
+        rl["count"] = 0
+        rl["last_reset"] = datetime.now()
+    
+    rl["count"] += 1
+    return rl["count"] > rl["max_requests"]
 
 st.title("AI CSV/XLS Analyser")
 
@@ -62,6 +74,13 @@ if file and n.isdigit():
         st.session_state.feedback_history = []
     if "feedback_message" not in st.session_state:
         st.session_state.feedback_message = ""
+    if "rate_limit" not in st.session_state:
+        st.session_state.rate_limit = {
+            "count": 0,
+            "last_reset": datetime.now(),
+            "window_seconds": 60,
+            "max_requests": 5,
+        }
 
     st.session_state.prompt_input = st.text_area("What do you want to know about the selected file?",
                               value=st.session_state.prompt_input)
@@ -77,7 +96,6 @@ if file and n.isdigit():
         else:
             st.session_state.generate_prompt = False
             st.session_state.missing_prompt = True
-
     
     # Display warning for empty prompt
     if st.session_state.missing_prompt:
@@ -94,6 +112,10 @@ if file and n.isdigit():
 
     prompt_input = st.session_state.prompt_input.lower()
     if st.session_state.generate_prompt:
+        if check_rate_limit():
+            st.error("Too many requests. Please try again after a minute.")
+            st.stop()
+            
         with st.spinner("Generating..."):
             # Extract dataset user wants to know about
             dataset = None
