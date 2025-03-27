@@ -66,18 +66,44 @@ if file and n.isdigit():
 
     st.button("Send", on_click=handle_send)
 
-    prompt_input = st.session_state.prompt_input
+    prompt_input = st.session_state.prompt_input.lower()
     if st.session_state.generate_prompt:
         with st.spinner("Generating..."):
-            sdf = SmartDataframe(df, config={"llm": llm})
-            response = sdf.chat(prompt_input, output_type="string")
+            # Extract dataset user wants to know about
+            dataset = None
+            for f in uploaded_files:
+                if f.name.lower() in prompt_input:
+                    dataset = f.name
+                    break
             
-            # Append prompt to history
-            prompt = st.session_state.prompt_input.strip()
-            if prompt and prompt not in st.session_state.prompt_history:
-                st.session_state.prompt_history.append(prompt_input.strip())
-                # Keep only recent 5 prompts
-                st.session_state.prompt_history = st.session_state.prompt_history[-5:]
-            st.write(response)
+            # Filter out the exact dataset
+            if dataset:
+                prompted_file = None
+                for f in uploaded_files:
+                    if f.name.lower() == dataset.lower():
+                        prompted_file = f
+                        break
+                # Check if csv/excel then read it
+                if prompted_file: 
+                    prompted_file.seek(0) # Reset pointer to start of file (allow re-parsing)
+                    if prompted_file.name.endswith(".csv"):
+                        df = pd.read_csv(f)
+                    else:
+                        df = pd.read_excel(f)
 
+                    sdf = SmartDataframe(df, config={"llm": llm})
+                    response = sdf.chat(prompt_input, output_type="string")
+            
+                    # Append prompt to history
+                    prompt = st.session_state.prompt_input.strip()
+                    if prompt and prompt not in st.session_state.prompt_history:
+                        st.session_state.prompt_history.append(prompt_input.strip())
+                        # Keep only recent 5 prompts
+                        st.session_state.prompt_history = st.session_state.prompt_history[-5:]
+                    st.write(response)
+                else:
+                    st.warning("Dataset not found. Have you uploaded it?")
+            else:
+                st.warning("Could not find valid dataset in your prompt.")
+        
         st.session_state.generate_prompt = False
