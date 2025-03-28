@@ -10,7 +10,7 @@ An intelligent web application that uses AI to analyse and answer queries from u
 - Support multi-file analysis
 - AI-powered data summarization
 - Natural language query support (e.g., "What are the top 5 products by sales?")
-- \*Adjustable number of rows to preview (`head`)
+- Adjustable number of rows to preview (`head`)
 
 ## Usage
 
