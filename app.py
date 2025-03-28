@@ -82,7 +82,7 @@ if file and n.isdigit():
             "max_requests": 5,
         }
 
-    st.session_state.prompt_input = st.text_area("What do you want to know about the selected file?",
+    st.session_state.prompt_input = st.text_area("Enter your prompt (Include file name you intend to learn more about) Eg. titanic.csv",
                               value=st.session_state.prompt_input)
     
     # Sanitise prompt input
